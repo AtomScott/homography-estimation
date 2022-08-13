@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"python.linting.banditEnabled": false,
+		"python.linting.enabled": false,
+		"python.linting.flake8Enabled": false,
+		"python.linting.lintOnSave": true,
+		"python.linting.mypyEnabled": false,
+		"python.linting.prospectorEnabled": true,
+		"python.linting.pycodestyleEnabled": false,
+		"python.linting.pydocstyleEnabled": false,
+		"python.linting.pylamaEnabled": false,
+		"python.linting.pylintEnabled": false,
+		"python.linting.prospectorArgs": [
+			"dlhe",
+			"--profile profile.prospector.yaml"
+		]
+	}
+}

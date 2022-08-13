@@ -1,0 +1,1 @@
+from https://github.com/SoccerNet/sn-calibration
