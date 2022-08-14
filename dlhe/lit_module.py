@@ -12,7 +12,6 @@ from pytorch_lightning import LightningModule
 from rich import inspect
 from torch.nn import functional as F
 
-from dlhe.metrics import dice_loss
 from dlhe.model.unet import UNet
 
 
@@ -42,7 +41,7 @@ class LitModel(LightningModule):
 
         # UNet related arguments
         parser.add_argument("--in_channels", type=int, default=3)
-        parser.add_argument("--out_channels", type=int, default=1)
+        parser.add_argument("--out_channels", type=int, default=49)
         parser.add_argument("--bilinear", type=bool, default=True)
 
         return parent_parser
@@ -54,14 +53,20 @@ class LitModel(LightningModule):
     def training_step(self, batch, batch_idx):
         x, y = batch
         y_hat = self(x)
-        loss = dice_loss(y_hat, y)
-        return loss
+        # loss = dice_loss(y_hat, y, multiclass=True)
+        bce_loss = F.binary_cross_entropy_with_logits(y_hat, y)
+        self.log("train/bce_loss", bce_loss, prog_bar=True)
+        return bce_loss
 
     def training_epoch_end(self, training_step_outputs):
         pass
 
     def validation_step(self, batch, batch_idx):
-        pass
+        x, y = batch
+        y_hat = self(x)
+        bce_loss = F.binary_cross_entropy_with_logits(y_hat, y)
+        self.log("val/bce_loss", bce_loss, prog_bar=True)
+        return bce_loss
 
     def validation_epoch_end(self, validation_step_outputs):
         pass

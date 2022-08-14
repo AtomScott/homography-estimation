@@ -4,6 +4,7 @@
 from argparse import ArgumentParser
 from pathlib import Path
 
+import cv2
 import numpy as np
 import torch
 from PIL import Image
@@ -15,7 +16,9 @@ from tqdm.rich import tqdm
 
 
 class KeypointDataset(Dataset):
-    def __init__(self, data_dir: _PATH, sigma: int = 10, scale: int = 1, transform = None):
+    def __init__(
+        self, data_dir: _PATH, sigma: int = 10, scale: int = 1, transform=None
+    ):
         """Dataset for keypoints.
 
         Args:
@@ -71,7 +74,7 @@ class KeypointDataset(Dataset):
         """
         sigma = self.sigma * self.scale
         _gaussians = self._gaussians
-        t = torch.zeros((h, w))
+        t = np.zeros((h, w))
 
         tmp_size = sigma * 3
 
@@ -92,7 +95,7 @@ class KeypointDataset(Dataset):
         g = (
             _gaussians[sigma]
             if sigma in _gaussians
-            else tensor(np.exp(-((tx - x0) ** 2 + (ty - y0) ** 2) / (2 * sigma ** 2)))
+            else np.exp(-((tx - x0) ** 2 + (ty - y0) ** 2) / (2 * sigma ** 2))
         )
         _gaussians[sigma] = g
 
@@ -107,28 +110,31 @@ class KeypointDataset(Dataset):
         t[img_y_min:img_y_max, img_x_min:img_x_max] = g[
             g_y_min:g_y_max, g_x_min:g_x_max
         ]
-
         return t
 
     def __getitem__(self, i):
-        img = self.preprocess_image(Image.open(self.img_paths[i]))
+        # image = self.preprocess_image(Image.open(self.img_paths[i]))
+
+        image = cv2.imread(str(self.img_paths[i]))
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
         kps = self.preprocess_keypoints(np.load(self.kp_paths[i]).T)
 
-        heatmaps = []
+        mask = []
         for kp in kps:
-            h, w = img.shape[1], img.shape[2]
+            h, w = image.shape[:2]
             x, y = kp
             heatmap = self.generate_gaussian(h, w, x, y)
-            heatmaps.append(heatmap)
-        heatmaps = np.stack(heatmaps, axis=0)
+            mask.append(heatmap)
+        mask = np.array(mask).transpose((1, 2, 0))
 
-        image = torch.from_numpy(img).float()
-        mask = torch.from_numpy(heatmaps).float()
-        
         if self.transform is not None:
             transformed = self.transform(image=image, mask=mask)
-            image = transformed['image']
-            mask = transformed['mask']
+            image = transformed["image"]
+            mask = transformed["mask"]
+
+        image = torch.from_numpy(image.transpose(2, 0, 1)).float()
+        mask = torch.from_numpy(mask.transpose(2, 0, 1)).float()
         return image, mask
 
 

@@ -1,7 +1,11 @@
 import os
 from argparse import ArgumentParser
+from gc import callbacks
+from pathlib import Path
+from time import gmtime, strftime
 
 import pytorch_lightning as pl
+from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
 from rich import inspect
 
@@ -22,8 +26,12 @@ if __name__ == "__main__":
     # (args for the data module are included here)
     parser = ArgumentParser()
     parser.add_argument("--data_dir", type=str, default="./data/")
-    parser.add_argument("--log_dir", type=str, default="./log/")
-    parser.add_argument("--batch_size", type=int, default=32)
+    parser.add_argument(
+        "--log_dir",
+        type=str,
+        default=f"./log/{strftime('%Y-%m-%d_%H:%M:%S', gmtime())}",
+    )
+    # parser.add_argument("--batch_size", type=int, default=8)
     parser.add_argument("--num_workers", type=int, default=os.cpu_count() // 2)
     parser.add_argument("--shuffle", type=bool, default=True)
 
@@ -42,7 +50,6 @@ if __name__ == "__main__":
     # -----------------
     # setup data module
     # -----------------
-
     dm = KeypointDataModule(args.data_dir, num_workers=args.num_workers)
 
     # ------------
@@ -60,9 +67,13 @@ if __name__ == "__main__":
     loggers = [csv_logger, tb_logger]
     os.makedirs(args.log_dir, exist_ok=True)
 
+    # setup callbacks
+    checkpoint_callback = ModelCheckpoint(dirpath=Path(args.log_dir) / "checkpoints")
+    callbacks = [checkpoint_callback]
+
     # see training flags for automatically added args
     # https://pytorch-lightning.readthedocs.io/en/latest/common/trainer.html#trainer-flags
-    trainer = pl.Trainer.from_argparse_args(args, logger=loggers)
+    trainer = pl.Trainer.from_argparse_args(args, logger=loggers, callbacks=callbacks)
 
     # Start training
     trainer.fit(model, dm)

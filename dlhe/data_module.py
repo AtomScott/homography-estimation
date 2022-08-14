@@ -5,6 +5,7 @@ from typing import *
 import albumentations as A
 import pytorch_lightning as pl
 from rich import inspect
+from torch import Tensor
 from torch.utils.data import DataLoader
 from tqdm.rich import tqdm
 
@@ -15,7 +16,7 @@ class KeypointDataModule(pl.LightningDataModule):
     def __init__(
         self,
         data_dir: str = "path/to/dir",
-        batch_size: int = 32,
+        batch_size: int = 8,
         pin_memory: bool = False,
         num_workers: int = 1,
     ):
@@ -28,9 +29,10 @@ class KeypointDataModule(pl.LightningDataModule):
         self.num_workers = num_workers
         self.transform = A.Compose(
             [
-                A.RandomCrop(width=256, height=256),
-                A.HorizontalFlip(p=0.5),
-                A.RandomBrightnessContrast(p=0.2),
+                A.Affine(p=0.5),
+                A.RandomResizedCrop(width=256, height=256, scale=(0.8, 1.0)),
+                A.RandomShadow(p=0.2),
+                A.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, p=0.3),
             ]
         )
 
@@ -70,7 +72,7 @@ class KeypointDataModule(pl.LightningDataModule):
     def val_dataloader(self):
         return DataLoader(
             self.valset,
-            batch_size=self.batch_size,
+            batch_size=1,
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
         )
@@ -78,7 +80,7 @@ class KeypointDataModule(pl.LightningDataModule):
     def test_dataloader(self):
         return DataLoader(
             self.testset,
-            batch_size=self.batch_size,
+            batch_size=1,
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
         )
