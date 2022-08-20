@@ -7,6 +7,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 import torch
+import torchvision
 from PIL import Image
 from pytorch_lightning.utilities.types import _PATH, Any, Dict, Union
 from rich import inspect
@@ -17,7 +18,7 @@ from tqdm.rich import tqdm
 
 class KeypointDataset(Dataset):
     def __init__(
-        self, data_dir: _PATH, sigma: int = 10, scale: int = 1, transform=None
+        self, data_dir: _PATH, sigma: int = 25, scale: int = 1, transform=None
     ):
         """Dataset for keypoints.
 
@@ -133,7 +134,16 @@ class KeypointDataset(Dataset):
             image = transformed["image"]
             mask = transformed["mask"]
 
-        image = torch.from_numpy(image.transpose(2, 0, 1)).float()
+        image = torchvision.transforms.Compose(
+            [
+                torchvision.transforms.ToTensor(),
+                torchvision.transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406],
+                    std=[0.229, 0.224, 0.225],
+                ),
+            ]
+        )(image)
+        # image = torch.from_numpy(image.transpose(2, 0, 1)).float()
         mask = torch.from_numpy(mask.transpose(2, 0, 1)).float()
         return image, mask
 

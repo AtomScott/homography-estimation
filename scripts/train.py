@@ -75,6 +75,20 @@ if __name__ == "__main__":
     # https://pytorch-lightning.readthedocs.io/en/latest/common/trainer.html#trainer-flags
     trainer = pl.Trainer.from_argparse_args(args, logger=loggers, callbacks=callbacks)
 
+    # Run learning rate finder
+    # lr_finder = trainer.tuner.lr_find(model, datamodule=dm)
+
+    # # Plot with
+    # fig = lr_finder.plot(suggest=True)
+    # fig.savefig(Path(args.log_dir) / "lr_finder.png")
+
+    # # Pick point based on plot, or get suggestion
+    # new_lr = lr_finder.suggestion()
+    # print(f"New learning rate: {new_lr}")
+
+    # # update hparams of the model
+    # model.hparams.lr = new_lr
+
     # Start training
     trainer.fit(model, dm)
 

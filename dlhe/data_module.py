@@ -3,7 +3,10 @@ from pathlib import Path
 from typing import *
 
 import albumentations as A
+import cv2
+import matplotlib.pyplot as plt
 import pytorch_lightning as pl
+import torch
 from rich import inspect
 from torch import Tensor
 from torch.utils.data import DataLoader
@@ -16,7 +19,7 @@ class KeypointDataModule(pl.LightningDataModule):
     def __init__(
         self,
         data_dir: str = "path/to/dir",
-        batch_size: int = 8,
+        batch_size: int = 4,
         pin_memory: bool = False,
         num_workers: int = 1,
     ):
@@ -29,10 +32,20 @@ class KeypointDataModule(pl.LightningDataModule):
         self.num_workers = num_workers
         self.transform = A.Compose(
             [
-                A.Affine(p=0.5),
-                A.RandomResizedCrop(width=256, height=256, scale=(0.8, 1.0)),
+                A.LongestMaxSize(max_size=600, always_apply=True),
+                A.Blur(blur_limit=(3), always_apply=True),
+                A.PadIfNeeded(
+                    min_height=512,
+                    min_width=512,
+                    always_apply=True,
+                    border_mode=cv2.BORDER_CONSTANT,
+                    mask_value=0,
+                    value=0,
+                ),
+                A.Affine(p=0.25),
+                A.RandomResizedCrop(width=512, height=512, scale=(0.8, 1.2)),
                 A.RandomShadow(p=0.2),
-                A.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, p=0.3),
+                A.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, p=0.1),
             ]
         )
 
@@ -58,7 +71,7 @@ class KeypointDataModule(pl.LightningDataModule):
         self.testset_path = Path(data_dir) / "test"
 
         self.trainset = KeypointDataset(self.trainset_path, transform=self.transform)
-        self.valset = KeypointDataset(self.valset_path)
+        self.valset = KeypointDataset(self.valset_path, transform=self.transform)
         self.testset = KeypointDataset(self.testset_path)
 
     def train_dataloader(self):
@@ -111,10 +124,26 @@ if __name__ == "__main__":
     dm.setup()
 
     for im, masks in tqdm(dm.train_dataloader(), desc="train_dataloader"):
-        pass
+        break
+
+    f, axarr = plt.subplots(1, 2)
+    axarr[0].imshow(im[0].cpu().numpy().transpose(1, 2, 0))
+    axarr[1].imshow(masks[0].cpu().numpy().mean(0))
+    plt.savefig("train-example.png")
+    plt.close()
 
     for im, masks in tqdm(dm.val_dataloader(), desc="val_dataloader"):
-        pass
+        break
+    f, axarr = plt.subplots(1, 2)
+    axarr[0].imshow(im[0].cpu().numpy().transpose(1, 2, 0))
+    axarr[1].imshow(masks[0].cpu().numpy().mean(0))
+    plt.savefig("val-example.png")
+    plt.close()
 
     for im, masks in tqdm(dm.test_dataloader(), desc="test_dataloader"):
-        pass
+        break
+    f, axarr = plt.subplots(1, 2)
+    axarr[0].imshow(im[0].cpu().numpy().transpose(1, 2, 0))
+    axarr[1].imshow(masks[0].cpu().numpy().mean(0))
+    plt.savefig("test-example.png")
+    plt.close()
