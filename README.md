@@ -33,7 +33,9 @@ pip install -e .
 (Work in progress)
 ## Dataset Preparation
 
-I used the WorldCup Dataset and SoccerNet Calibration Dataset to train the network. The TS-WorldCup Dataset is used only for testing the performance of the network on sequences of images.
+I used the WorldCup Dataset and SoccerNet Calibration Dataset to train the network. The TS-WorldCup Dataset is used only for testing the performance of the network on sequences of images. In this implementation, the network is trained to detection uniformally distributed keypoints in the image. I've added an image to show an example of what the network should learn.
+
+![](./assets/viz_sample.png)
 
 Below are instructions for downloading and preparing each dataset.
 
