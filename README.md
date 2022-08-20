@@ -139,3 +139,19 @@ dlhe prepare_dataset --dataset_dir raw/ --output_dir data/wc_dataset --dataset t
 ## Run Inference
 
 (Work in progress)
+
+
+
+## Dev Setup
+
+Before building dokcer container, prepare .env file by the following command.
+
+```
+cp .env{.template,}
+```
+
+To you use the vs-code settings template, do you the same for .code-workspace file.
+
+```
+cp .code-workspace{.template,}
+```
